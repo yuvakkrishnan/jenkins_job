@@ -3,13 +3,10 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials') // Jenkins credential ID
-        DOCKER_IMAGE_NAME = "yuvakkrishnans/golang-simple-service" // Your Docker Hub username/repo
+        DOCKER_IMAGE_NAME = "yuvakkrishnans/golang-simple-service" // Docker Hub username/repo
     }
 
     stages {
-        // REMOVED: stage('Checkout') block is no longer needed
-        // Jenkins automatically checks out the repository when using "Pipeline script from SCM"
-
         stage('Build Docker Image') {
             steps {
                 script {
@@ -17,6 +14,7 @@ pipeline {
                 }
             }
         }
+
         stage('Login to Docker Hub') {
             steps {
                 script {
@@ -26,6 +24,7 @@ pipeline {
                 }
             }
         }
+
         stage('Push Docker Image') {
             steps {
                 script {
@@ -35,21 +34,34 @@ pipeline {
                 }
             }
         }
+
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Stop and remove existing container if it exists
+                    // Stop container using port 8080 if any
+                    sh '''
+                    CONTAINER_ID=$(docker ps -q --filter "publish=8080")
+                    if [ ! -z "$CONTAINER_ID" ]; then
+                      echo "Stopping container using port 8080: $CONTAINER_ID"
+                      docker stop $CONTAINER_ID
+                      docker rm $CONTAINER_ID
+                    fi
+                    '''
+
+                    // Stop/remove old container by name if exists
                     sh "docker stop golang-service || true"
                     sh "docker rm golang-service || true"
-                    // Run the new container
+
+                    // Run new container
                     sh "docker run -d -p 8080:8080 --name golang-service ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}"
                 }
             }
         }
     }
+
     post {
         always {
-            cleanWs() // Clean up workspace
+            cleanWs()
         }
         success {
             echo 'Pipeline finished successfully!'
