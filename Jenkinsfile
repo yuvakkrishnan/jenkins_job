@@ -2,14 +2,11 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials') // Jenkins credential ID
-        DOCKER_IMAGE_NAME = "yuvakkrishnans/golang-simple-service" // Your Docker Hub username/repo
+        DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKER_IMAGE_NAME = "yuvakkrishnans/golang-simple-service"
     }
 
     stages {
-        // REMOVED: stage('Checkout') block is no longer needed
-        // Jenkins automatically checks out the repository when using "Pipeline script from SCM"
-
         stage('Build Docker Image') {
             steps {
                 script {
@@ -17,15 +14,21 @@ pipeline {
                 }
             }
         }
+
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )]) {
                         sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
                     }
                 }
             }
         }
+
         stage('Push Docker Image') {
             steps {
                 script {
@@ -35,21 +38,22 @@ pipeline {
                 }
             }
         }
+
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Stop and remove existing container if it exists
                     sh "docker stop golang-service || true"
                     sh "docker rm golang-service || true"
-                    // Run the new container
-                    sh "docker run -d -p 8080:8080 --name golang-service ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}"
+                    // host port 8081 maps to container port 8080
+                    sh "docker run -d -p 8081:8080 --name golang-service ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}"
                 }
             }
         }
     }
+
     post {
         always {
-            cleanWs() // Clean up workspace
+            cleanWs()
         }
         success {
             echo 'Pipeline finished successfully!'
