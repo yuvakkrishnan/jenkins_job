@@ -7,11 +7,9 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/yuvakkrishnan/jenkins_job.git'
-            }
-        }
+        // REMOVED: stage('Checkout') block is no longer needed
+        // Jenkins automatically checks out the repository when using "Pipeline script from SCM"
+
         stage('Build Docker Image') {
             steps {
                 script {
