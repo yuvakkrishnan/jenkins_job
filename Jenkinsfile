@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials') // Jenkins credential ID
-        DOCKER_IMAGE_NAME = "yuvakkrishnan/golang-simple-service" // Your Docker Hub username/repo
+        DOCKER_IMAGE_NAME = "yuvakkrishnans/golang-simple-service" // Your Docker Hub username/repo
     }
 
     stages {
